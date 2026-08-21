@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Reveal } from './Reveal';
 
-type Status = 'idle' | 'loading' | 'success';
+type Status = 'idle' | 'loading' | 'success' | 'error';
 
 const socials = [
   { icon: Linkedin, label: 'LinkedIn', href: '#' },
@@ -22,18 +22,22 @@ const socials = [
 
 function FloatingInput({
   id,
+  name,
   label,
   type = 'text',
   textarea = false,
   value,
   onChange,
+  required = true,
 }: {
   id: string;
+  name: string;
   label: string;
   type?: string;
   textarea?: boolean;
   value: string;
   onChange: (v: string) => void;
+  required?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   const active = focused || value.length > 0;
@@ -46,8 +50,9 @@ function FloatingInput({
       {textarea ? (
         <textarea
           id={id}
-          name={id}
+          name={name}
           rows={4}
+          required={required}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
@@ -58,8 +63,9 @@ function FloatingInput({
       ) : (
         <input
           id={id}
-          name={id}
+          name={name}
           type={type}
+          required={required}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
@@ -86,9 +92,10 @@ export function Contact() {
   const [status, setStatus] = useState<Status>('idle');
   const [form, setForm] = useState({ name: '', email: '', message: '' });
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (status === 'loading') return;
+
     setStatus('loading');
 
     try {
@@ -96,27 +103,28 @@ export function Contact() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           name: form.name,
           email: form.email,
-          message: form.message
-        })
+          message: form.message,
+        }),
       });
 
       if (response.ok) {
         setStatus('success');
         setForm({ name: '', email: '', message: '' });
-        // Повертаємо кнопку в початковий стан через 4 секунди
-        setTimeout(() => setStatus('idle'), 4000);
+        setTimeout(() => setStatus('idle'), 5000);
       } else {
-        setStatus('idle');
-        alert('Щось пішло не так. Спробуйте ще раз.');
+        console.error('Formspree response error:', await response.text());
+        setStatus('error');
+        setTimeout(() => setStatus('idle'), 4000);
       }
-    } catch (error) {
-      setStatus('idle');
-      alert('Помилка мережі. Перевірте з\'єднання.');
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setStatus('error');
+      setTimeout(() => setStatus('idle'), 4000);
     }
   };
 
@@ -124,7 +132,7 @@ export function Contact() {
     <section id="contact" className="relative px-6 py-28 md:py-40">
       <div className="mx-auto max-w-5xl">
         <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-          {/* Left: heading + socials */}
+          {/* Left: heading + contact info */}
           <Reveal>
             <span className="section-label">
               <span className="h-px w-8 bg-metallic-500" />
@@ -161,10 +169,10 @@ export function Contact() {
 
             {/* Direct email */}
             <a
-              href="mailto:hello@levkivsky.com"
+              href="mailto:vd.fedoruk@gmail.com"
               className="group mt-8 inline-flex items-center gap-2 text-sm text-metallic-300 transition-colors hover:text-metallic-50"
             >
-              hello@levkivsky.com
+              vd.fedoruk@gmail.com
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </a>
           </Reveal>
@@ -178,12 +186,14 @@ export function Contact() {
               <div className="space-y-4">
                 <FloatingInput
                   id="name"
+                  name="name"
                   label="Full Name"
                   value={form.name}
                   onChange={(v) => setForm((f) => ({ ...f, name: v }))}
                 />
                 <FloatingInput
                   id="email"
+                  name="email"
                   label="Email Address"
                   type="email"
                   value={form.email}
@@ -191,6 +201,7 @@ export function Contact() {
                 />
                 <FloatingInput
                   id="message"
+                  name="message"
                   label="Your Message"
                   textarea
                   value={form.message}
@@ -210,7 +221,7 @@ export function Contact() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex items-center gap-2"
+                      className="flex items-center justify-center gap-2"
                     >
                       Send Message
                       <ArrowUpRight className="h-4 w-4" />
@@ -222,7 +233,7 @@ export function Contact() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex items-center gap-2"
+                      className="flex items-center justify-center gap-2"
                     >
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Sending...
@@ -234,10 +245,21 @@ export function Contact() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="flex items-center gap-2"
+                      className="flex items-center justify-center gap-2 text-emerald-400"
                     >
                       <Check className="h-4 w-4" />
                       Message Sent
+                    </motion.span>
+                  )}
+                  {status === 'error' && (
+                    <motion.span
+                      key="error"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center justify-center gap-2 text-rose-400"
+                    >
+                      Error Sending
                     </motion.span>
                   )}
                 </AnimatePresence>
@@ -247,7 +269,7 @@ export function Contact() {
               <AnimatePresence>
                 {status === 'success' && (
                   <motion.div
-                    className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl bg-obsidian-300/80 backdrop-blur-md"
+                    className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl bg-obsidian-300/90 backdrop-blur-md"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
