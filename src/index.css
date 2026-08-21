@@ -44,12 +44,25 @@
 }
 
 @layer components {
+  /*
+    .glass / .glass-strong are used across Navbar, Vision cards, Footer,
+    and buttons. backdrop-blur-xl/2xl on every one of these surfaces was
+    the single biggest GPU cost in the app: each is an independent
+    compositor layer, several are fixed-position (Navbar) or repeated
+    (3 Vision cards), and backdrop-filter is one of the most expensive
+    operations available on mobile GPUs — this is a primary suspect for
+    the crashes described.
+
+    Fix: mobile gets a plain semi-opaque surface (no blur, no filter
+    compositing). Desktop gets the exact original blur values back via
+    a min-width override, so nothing changes above 768px.
+  */
   .glass {
-    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.06];
+    @apply bg-white/[0.06] border border-white/[0.06];
   }
 
   .glass-strong {
-    @apply bg-white/[0.05] backdrop-blur-2xl border border-white/[0.08];
+    @apply bg-white/[0.08] border border-white/[0.08];
   }
 
   .text-gradient {
@@ -78,6 +91,23 @@
 
   .divider-glow {
     background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.15), transparent);
+  }
+}
+
+/* Desktop-only restoration of the original blur values (≥768px = md) */
+@media (min-width: 768px) {
+  .glass {
+    background-color: rgb(255 255 255 / 0.03);
+    border-color: rgb(255 255 255 / 0.06);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .glass-strong {
+    background-color: rgb(255 255 255 / 0.05);
+    border-color: rgb(255 255 255 / 0.08);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
   }
 }
 
@@ -126,5 +156,28 @@
     100% {
       background-position: -200% 0;
     }
+  }
+}
+
+/*
+  Shimmer-text animates `background-position` on a text-clipped gradient
+  every 4s, forever. It's a small element so it isn't a crash risk on its
+  own, but it's an unnecessary infinite repaint loop that costs battery
+  for no interaction benefit. Mobile gets the same gradient statically
+  (still reads as a metallic highlight on the headline), desktop keeps
+  the full animated shimmer unchanged.
+*/
+@media (max-width: 767px) {
+  .animate-shimmer-text {
+    animation: none;
+    background-position: 0% 0;
+  }
+}
+
+/* Respect the OS-level reduce-motion preference for this decorative effect */
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer-text {
+    animation: none;
+    background-position: 0% 0;
   }
 }
