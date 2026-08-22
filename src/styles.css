@@ -213,8 +213,9 @@ header.on-dark .brand-tag { color: rgba(237,232,219,0.5); }
 .cap-item {
   background: var(--bone);
   padding: 48px 36px;
-  transition: background 0.4s ease;
+  transition: background 0.4s ease, transform 0.4s var(--ease-out);
 }
+.cap-item:hover { transform: translateY(-4px); }
 .cap-item:hover { background: rgba(43,40,32,0.03); }
 .cap-item h3 {
   font-size: 1.3rem; font-weight: 500; margin-bottom: 16px;
@@ -245,6 +246,22 @@ header.on-dark .brand-tag { color: rgba(237,232,219,0.5); }
 }
 .deep-dive .body p { font-size: 1.05rem; line-height: 1.7; color: var(--ink); margin-bottom: 20px; }
 .deep-dive .body p:last-child { color: var(--ink-2); }
+
+/* ---------- Audience ---------- */
+.audience { padding: 20px 0 140px; }
+.audience-list { display: flex; flex-direction: column; }
+.audience-item {
+  display: grid; grid-template-columns: 120px 1fr; gap: 32px;
+  padding: 40px clamp(20px, 5vw, 64px);
+  border-top: 1px solid var(--paper-line);
+  transition: background 420ms var(--ease-soft);
+  align-items: start;
+}
+.audience-item:last-child { border-bottom: 1px solid var(--paper-line); }
+.audience-item:hover { background: var(--bone-2); }
+.audience-num { font-size: 14px; color: var(--ink-2); letter-spacing: 0.08em; }
+.audience-item h3 { font-size: 1.3rem; font-weight: 500; margin-bottom: 10px; }
+.audience-item p { color: var(--ink-2); max-width: 560px; line-height: 1.6; }
 
 /* ---------- Process ---------- */
 .process { padding: 80px 0 140px; }
@@ -413,6 +430,7 @@ body.is-loaded .hero-actions {
 @media (max-width: 900px) {
   .cap-grid { grid-template-columns: 1fr; }
   .process-item { grid-template-columns: 64px 1fr; gap: 20px; padding: 32px 24px; }
+  .audience-item { grid-template-columns: 64px 1fr; gap: 20px; padding: 32px 24px; }
   .legal { flex-direction: column; gap: 16px; text-align: center; }
   .legal nav { gap: 20px; }
 }
